@@ -330,6 +330,85 @@ const updateUserCoverImage = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, uesr, "Cover Image updated successfully"));
 });
 
+// this controller includes concepts for data joining across collections.
+const getUserChannelProfile = asyncHandler(async (req, res) => {
+  const { username } = req.params;
+
+  if (!username?.trim()) {
+    throw new ApiError(400, "Username is missing");
+  }
+
+  const channel = await User.aggregate([
+    // the match stage gives you a single user,which will be used in the next stage.
+    {
+      $match: {
+        username: username?.toLowerCase(),
+      },
+    },
+    // to calculate all subscribers of the channel (channel is same as the user in previous stage.)
+    // from specifies the target collection where the documents will be looked up.
+    // localField indicates the field from the current collection which will be used to match documents in the "subscriptions" collection. Here, it's the "_id" field.
+    // foreignField specifies the field from the "subscriptions" collection that will be used to match documents in the current collection.
+    // as defines the name of the new array field that will be added to the documents from the current collection.
+    {
+      $lookup: {
+        from: "subscriptions",
+        localField: "_id",
+        foreignField: "channel",
+        as: "subscribers",
+      },
+    },
+    // to find which channels the user is subscribed to
+    {
+      form: "subscriptions",
+      localField: "_id",
+      foreignField: "subscriber",
+      as: "subscribedTo",
+    },
+    // addFields initiates the stage to add new fields to each document in the pipeline result.
+    {
+      $addFields: {
+        subscribersCount: {
+          $size: "$subscribers",
+        },
+        channelsSubscribedToCount: {
+          $size: "$subscribedTo",
+        },
+        isSubscribed: {
+          $cond: {
+            if: { $in: [req.user?._id, "$subscribers.subscriber"] },
+            then: true,
+            else: false,
+          },
+        },
+      },
+    },
+    // to define the output of the document.
+    {
+      $project: {
+        fullname: 1,
+        username: 1,
+        subscribersCount: 1,
+        channelsSubscribedToCount: 1,
+        isSubscribed: 1,
+        avatar: 1,
+        coverImage: 1,
+        email: 1,
+      },
+    },
+  ]);
+
+  if (!channel?.length) {
+    throw new ApiError(404, "Channel does not exist");
+  }
+
+  return res
+    .status(200)
+    .json(
+      new ApiResponse(200, channel[0], "User channel fetched successfully")
+    );
+});
+
 export {
   registerUser,
   loginUser,
@@ -340,4 +419,11 @@ export {
   updateAccountDetails,
   updateUserAvatar,
   updateUserCoverImage,
+  getUserChannelProfile,
 };
+
+// An aggregation pipeline consists of one or more stages that process documents.
+// Each stage performs an operation on the input document.
+// document that are output from a stage are passed to the next stage.
+
+// $lookup performs a left outer join of one unsharded collection to another unsharded collection in the same database. They allow you to filter in documents from the "joined" collection for processing.
