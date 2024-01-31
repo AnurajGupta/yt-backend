@@ -19,6 +19,7 @@ export const verifyJWt = asyncHandler(async(req, _ , next) => {
             throw new ApiError(401 , "Invalid Access Token");
         }
     
+        // whenever the auth middleware is used, a user object (new field) is added to the req.
         req.user = user;
         next();
     } catch (error) {
