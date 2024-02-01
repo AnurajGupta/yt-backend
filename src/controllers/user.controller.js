@@ -143,12 +143,13 @@ const loginUser = asyncHandler(async (req, res) => {
     );
 });
 
+// revise logout route!
 const logoutUser = asyncHandler(async (req, res) => {
   User.findByIdAndUpdate(
     req.user._id,
     {
-      $set: {
-        refreshToken: undefined,
+      $unset: {
+        refreshToken: 1,
       },
     },
     {
@@ -361,10 +362,12 @@ const getUserChannelProfile = asyncHandler(async (req, res) => {
     },
     // to find which channels the user is subscribed to
     {
-      form: "subscriptions",
-      localField: "_id",
-      foreignField: "subscriber",
-      as: "subscribedTo",
+      $lookup: {
+        from: "subscriptions",
+        localField: "_id",
+        foreignField: "subscriber",
+        as: "subscribedTo",
+      },
     },
     // addFields initiates the stage to add new fields to each document in the pipeline result.
     {
@@ -437,24 +440,31 @@ const getWatchHistory = asyncHandler(async (req, res) => {
                     username: 1,
                     avatar: 1,
                   },
-                } 
+                },
               ],
             },
           },
           {
             $addFields: {
               owner: {
-                $first: "$owner"
-              }
-            }
-          }
+                $first: "$owner",
+              },
+            },
+          },
         ],
       },
     },
   ]);
 
-  return res.status(200)
-  .json(new ApiResponse(200 , user[0].watchHistory , "watch history fetched successfully"));
+  return res
+    .status(200)
+    .json(
+      new ApiResponse(
+        200,
+        user[0].watchHistory,
+        "watch history fetched successfully"
+      )
+    );
 });
 
 export {
