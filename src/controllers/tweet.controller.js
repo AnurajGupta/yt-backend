@@ -1,8 +1,12 @@
-import asyncHandler from "../utils/asyncHandler.js";
-import ApiError from "../utils/ApiError.js";
+import { asyncHandler } from "../utils/asyncHandler.js";
+import { ApiError } from "../utils/ApiError.js";
 import { Tweet } from "../models/tweet.model.js";
-import mongoose from "mongoose";
 import { ApiResponse } from "../utils/ApiResponse.js";
+
+// getUserTweet
+// const getUserTweets = asyncHandler(async(req , res) => {
+
+// })
 
 // createTweet
 const createTweet = asyncHandler(async (req, res) => {
@@ -25,9 +29,6 @@ const createTweet = asyncHandler(async (req, res) => {
     .status(200)
     .json(new ApiResponse(200, tweet, "Tweet created successfully!"));
 });
-
-// getUserTweet
-
 
 // updateTweet
 const updateTweet = asyncHandler(async (req, res) => {
@@ -62,16 +63,16 @@ const updateTweet = asyncHandler(async (req, res) => {
     { new: true }
   );
 
-  if(!newTweet){
-    throw new ApiError(500 , "Failed to edit your tweet! please try again");
+  if (!newTweet) {
+    throw new ApiError(500, "Failed to edit your tweet! please try again");
   }
 
-  res.status(200)
-  .json(new ApiResponse(200 , newTweet , "Tweet updated successfully"));
-
+  res
+    .status(200)
+    .json(new ApiResponse(200, newTweet, "Tweet updated successfully"));
 });
 // deleteTweet
-const deleteTweet = asyncHandler(async(req , res) => {
+const deleteTweet = asyncHandler(async (req, res) => {
   const { tweetId } = req.params;
 
   const tweet = await Tweet.findById(tweetId);
@@ -86,12 +87,11 @@ const deleteTweet = asyncHandler(async(req , res) => {
 
   const deletedTweet = await Tweet.findByIdAndDelete(tweetId);
 
-  if(!deletedTweet){
-    throw new ApiError(500 , "Failed to delete tweet, please try again");
+  if (!deletedTweet) {
+    throw new ApiError(500, "Failed to delete tweet, please try again");
   }
 
-  res.status(200)
-  .json(200 , deletedTweet , "Tweet deleted successfully");
-})
+  res.status(200).json(200, deletedTweet, "Tweet deleted successfully");
+});
 
-export { createTweet, updateTweet , deleteTweet };
+export { createTweet, updateTweet, deleteTweet };

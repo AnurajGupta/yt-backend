@@ -1,10 +1,10 @@
-import asyncHandler from "../utils/asyncHandler.js";
-import ApiError from "../utils/ApiError.js";
+import {asyncHandler} from "../utils/asyncHandler.js";
+import { ApiError } from "../utils/ApiError.js";
 import { User } from "../models/user.model.js";
 import { uploadOnCloudinary } from "../utils/cloudinary.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
-import jwt from "jsonwebtoken";
-import mongoose from "mongoose";
+// import jwt from "jsonwebtoken";
+// import mongoose from "mongoose";
 
 const generateAccessAndRefreshToken = async (userId) => {
   try {
@@ -209,7 +209,7 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
             accessToken,
             refreshToken: newRefreshToken,
           },
-          "Access Token Refreshed"
+          "Access Token Refreshed Successfully"
         )
       );
   } catch (error) {
@@ -329,7 +329,7 @@ const updateUserCoverImage = asyncHandler(async (req, res) => {
 
   return res
     .status(200)
-    .json(new ApiResponse(200, uesr, "Cover Image updated successfully"));
+    .json(new ApiResponse(200, user, "Cover Image updated successfully"));
 });
 
 // this controller includes concepts for data joining across collections.
