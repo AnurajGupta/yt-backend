@@ -1,3 +1,6 @@
+import dotenv from "dotenv";
+dotenv.config({ path: "./env" });
+
 import express from "express";
 import cookieParser from "cookie-parser";
 import cors from "cors";
@@ -20,7 +23,9 @@ app.use(cookieParser());
 
 // route imported
 import userRouter from "./routes/user.routes.js";
+import tweetRouter from "./routes/tweet.routes.js";
 // route declared
 app.use("/api/v1/users", userRouter);
+app.use("/api/v1/tweets", tweetRouter);
 
 export default app;

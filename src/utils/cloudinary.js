@@ -16,7 +16,6 @@ const uploadOnCloudinary = async (localFilePath) => {
     if (fs.existsSync(localFilePath)) {
       // File exists, proceed with unlinking
       fs.unlinkSync(localFilePath);
-      // Rest of your code for cloudinary upload
     }
 
     return response;
@@ -24,7 +23,6 @@ const uploadOnCloudinary = async (localFilePath) => {
     if (fs.existsSync(localFilePath)) {
       // File exists, proceed with unlinking
       fs.unlinkSync(localFilePath);
-      // Rest of your code for cloudinary upload
     }
     // it removes the locally saved file as the upload operation got failed.
     return null;
