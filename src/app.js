@@ -23,8 +23,8 @@ app.use(cookieParser());
 
 // route imported
 import userRouter from "./routes/user.routes.js";
-import tweetRouter from "./routes/tweet.routes.js";
 import likeRouter from "./routes/like.routes.js";
+import tweetRouter from "./routes/tweet.routes.js";
 import commentRouter from "./routes/comment.routes.js";
 
 

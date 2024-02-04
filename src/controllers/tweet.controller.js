@@ -2,11 +2,78 @@ import { asyncHandler } from "../utils/asyncHandler.js";
 import { ApiError } from "../utils/ApiError.js";
 import { Tweet } from "../models/tweet.model.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
+import mongoose from "mongoose";
 
 // getUserTweet
-// const getUserTweets = asyncHandler(async(req , res) => {
+const getUserTweets = asyncHandler(async (req, res) => {
+  const { userId } = req.params;
 
-// })
+  // contains content and owner
+  const tweets = await Tweet.aggregate([
+    {
+      $match: {
+        owner: new mongoose.Types.ObjectId(userId),
+      },
+    },
+    {
+      $lookup: {
+        from: "users",
+        localField: "owner",
+        foreignField: "_id",
+        as: "ownerDetails",
+        pipeline: [
+          {
+            $project: {
+              fullname: 1,
+              username: 1,
+              avatar: 1,
+            },
+          },
+        ],
+      },
+    },
+    {
+      $lookup: {
+        from: "likes",
+        localField: "_id",
+        foreignField: "tweet", // tweet likes
+        as: "likeDetails",
+        pipeline: [
+          {
+            $project: {
+              likedBy: 1, // refers to User
+            },
+          },
+        ],
+      },
+    },
+    {
+      $addFields: {
+        likesCount: {
+          $size: "$likeDetails",
+        },
+        ownerDetails: {
+          $first: "$ownerDetails",
+        },
+      },
+    },
+    {
+      $project: {
+        content: 1,
+        createdAt: 1,
+        fullname: "$ownerDetails.fullname",
+        username: "$ownerDetails.username",
+        avatar: "$ownerDetails.avatar",
+        likedBy: 1,
+        likesCount: 1,
+      },
+    },
+  ]);
+
+  res
+    .status(200)
+    .json(new ApiResponse(200, tweets, "Tweets fetched successfully"));
+});
 
 // createTweet
 const createTweet = asyncHandler(async (req, res) => {
@@ -94,4 +161,4 @@ const deleteTweet = asyncHandler(async (req, res) => {
   res.status(200).json(200, deletedTweet, "Tweet deleted successfully");
 });
 
-export { createTweet, updateTweet, deleteTweet };
+export { createTweet, updateTweet, deleteTweet, getUserTweets };

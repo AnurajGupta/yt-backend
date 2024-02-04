@@ -2,7 +2,7 @@ import { asyncHandler } from "../utils/asyncHandler.js";
 import { Like } from "../models/like.model.js";
 import { ApiResponse } from "../utils/ApiResponse";
 
-// const getVideoLikes = asyncHandler(async(req , res)=> {
+// const getLikedVideos = asyncHandler(async(req , res)=> {
 
 // })
 
