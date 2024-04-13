@@ -4,10 +4,80 @@ import { ApiError } from "../utils/ApiError.js";
 import { Comment } from "../models/comment.model.js";
 import { Video } from "../models/video.model.js";
 
+const getVideoComments = asyncHandler(async (req, res) => {
+  const { videoId } = req.params;
 
-// const getVideoComments = asyncHandler(async(req , res) => {
-    
-// })
+  const video = await Video.findById(videoId);
+
+  if (!videoId) {
+    throw new ApiError(404, "Video not found");
+  }
+
+  const allComments = Comment.aggregate([
+    {
+      $match: {
+        video: new mongoose.Types.ObjectId(videoId),
+      },
+    },
+    {
+      $lookup: {
+        from: "users",
+        localField: "owner",
+        foreignField: "_id",
+        as: "owner",
+      },
+    },
+    {
+      $lookup: {
+        from: "likes",
+        localField: "_id",
+        foreignField: "comment",
+        as: "likes",
+      },
+    },
+    {
+      $addFields: {
+        likesCount: {
+          $size: "$likes",
+        },
+        owner: {
+          $first: "$owner",
+        },
+        isLiked: {
+          $cond: {
+            if: { $in: [req.user?._id, "$likes.likedBy"] },
+            then: true,
+            else: false,
+          },
+        },
+      },
+    },
+    {
+      $sort: {
+        createdAt: -1,
+      },
+    },
+    {
+      $project: {
+        content: 1,
+        createdAt: 1,
+        likesCount: 1,
+        owner: {
+          username: 1,
+          fullName: 1,
+          "avatar.url": 1,
+        },
+        isLiked: 1,
+      },
+    },
+  ]);
+
+  res
+    .status(200)
+    .json(
+      new ApiResponse(200, allComments, "liked comments fetched successfully")
+    );
+});
 
 const addComment = asyncHandler(async (req, res) => {
   const { videoId } = req.params;
@@ -75,26 +145,28 @@ const updateComment = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, newComment, "Comment edited successfully"));
 });
 
-const deleteComment = asyncHandler(async(req ,res) => {
-    const {commentId} = req.params;
+const deleteComment = asyncHandler(async (req, res) => {
+  const { commentId } = req.params;
 
-    const comment = await Comment.findById(commentId);
+  const comment = await Comment.findById(commentId);
 
-    if(!comment){
-        throw new ApiError(400 , "Comment not found")
-    }
+  if (!comment) {
+    throw new ApiError(400, "Comment not found");
+  }
 
-    if (comment?.owner.toString() !== req.user?._id.toString()) {
-        throw new ApiError(400, "Unauthorized User");
-      }
+  if (comment?.owner.toString() !== req.user?._id.toString()) {
+    throw new ApiError(400, "Unauthorized User");
+  }
 
-    const deletedComment = await Comment.findByIdAndDelete(commentId);
+  const deletedComment = await Comment.findByIdAndDelete(commentId);
 
-    if(!deletedComment){
-        throw new ApiError(500 , "failed to delete comment! please try again later")
-    }
+  if (!deletedComment) {
+    throw new ApiError(500, "failed to delete comment! please try again later");
+  }
 
-    return res.status(200).json(new ApiResponse(200 , deletedComment , "comment deleted successfully"))
-})
+  return res
+    .status(200)
+    .json(new ApiResponse(200, deletedComment, "comment deleted successfully"));
+});
 
-export {addComment , updateComment , deleteComment}
+export { addComment, updateComment, deleteComment };
