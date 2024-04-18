@@ -3,6 +3,7 @@ import { ApiResponse } from "../utils/ApiResponse.js";
 import { ApiError } from "../utils/ApiError.js";
 import { Comment } from "../models/comment.model.js";
 import { Video } from "../models/video.model.js";
+import mongoose from "mongoose";
 
 const getVideoComments = asyncHandler(async (req, res) => {
   const { videoId } = req.params;
@@ -169,4 +170,4 @@ const deleteComment = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, deletedComment, "comment deleted successfully"));
 });
 
-export { addComment, updateComment, deleteComment };
+export { addComment, updateComment, deleteComment , getVideoComments};

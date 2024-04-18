@@ -1,8 +1,11 @@
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { Like } from "../models/like.model.js";
-import { ApiResponse } from "../utils/ApiResponse";
+import { ApiResponse } from "../utils/ApiResponse.js";
+import mongoose from "mongoose";
 
 const getLikedVideos = asyncHandler(async (req, res) => {
+
+  // in case of user not logged in.
   const allLikedVideos = await Like.aggregate([
     {
       $match: {
