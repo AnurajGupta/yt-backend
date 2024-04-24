@@ -22,7 +22,7 @@ const getVideoById = asyncHandler(async (req, res) => {
       $match: {
         _id: new mongoose.Types.ObjectId(videoId), 
       },
-    },
+    }, 
     {
       $lookup: {
         from: "likes",
