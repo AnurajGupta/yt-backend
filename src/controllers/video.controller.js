@@ -4,7 +4,7 @@ import { Video } from "../models/video.model.js";
 import mongoose, { isValidObjectId } from "mongoose";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { User } from "../models/user.model.js";
-import { uploadOnCloudinary } from "../utils/cloudinary.js";
+import { deleteOnCloudinary, uploadOnCloudinary } from "../utils/cloudinary.js";
 
 // const getAllVideos = asyncHandler(async (req, res) => {});
 
@@ -190,9 +190,71 @@ const publishVideo = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, video, "Video Published Successfully"));
 });
 
-// update
+const updateVideo = asyncHandler(async (req, res) => {
+  const { title, description } = req.body;
 
-// delete
+  const { videoId } = req.params;
+
+  if (!isValidObjectId(videoId)) {
+    throw new ApiError(404, "Invalid videoId");
+  }
+
+  if (!(title && description)) {
+    throw new ApiError(404, "Title and Description are required.");
+  }
+
+  const video = await Video.findById(videoId);
+
+  if (!video) {
+    throw new ApiError(404, "No Video Found");
+  }
+
+  if (video?.owner.toString() !== req.user?._id.toString()) {
+    throw new ApiError(400, "Unauthorized User");
+  }
+
+  const thumbnailToDelete = video.thumbnail.public_id;
+  const thumbnailLocalPath = req.file?.path;
+
+  if (!thumbnailLocalPath) {
+    throw new ApiError(400, "thumbnail is required");
+  }
+
+  const newThumbnail = await uploadOnCloudinary(thumbnailLocalPath);
+
+  if (!newThumbnail) {
+    throw new ApiError(400, "Thumbnail updation failed");
+  }
+
+  const updatedVideo = await Video.findByIdAndUpdate(
+    videoId,
+    {
+      $set: {
+        title,
+        description,
+        thumbnail: {
+          url: newThumbnail.url,
+          public_id: newThumbnail.public_id,
+        },
+      },
+    },
+    { new: true }
+  );
+
+  if (!updatedVideo) {
+    throw new ApiError(500, "Failed to update video. Please try again later.");
+  }
+
+  if (updatedVideo) {
+    await deleteOnCloudinary(thumbnailToDelete);
+  }
+
+  return res
+    .status(200)
+    .json(
+      new ApiResponse(200, updatedVideo, "Video details updated successfully.")
+    );
+});
 
 const togglePublishStatus = asyncHandler(async (req, res) => {
   const videoId = req.params;
@@ -239,4 +301,4 @@ const togglePublishStatus = asyncHandler(async (req, res) => {
     );
 });
 
-export { getVideoById, publishVideo ,togglePublishStatus};
+export { getVideoById, updateVideo, publishVideo, togglePublishStatus };
